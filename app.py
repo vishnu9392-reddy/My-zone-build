@@ -44,12 +44,7 @@ def get_firestore():
 
     return db
 
-        except Exception as e:
-            print(f"Firebase initialization failed: {e}")
-            raise
-
-    return db
-
+       
 # ✅ Use this in your code to get Firestore reference
 db = get_firestore()
 
