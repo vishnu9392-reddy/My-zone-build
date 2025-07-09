@@ -11,14 +11,8 @@ complaints = []
 # Initialize Firebase
 import firebase_admin
 from firebase_admin import credentials, firestore
-import json, os
-
-firebase_app = None
-db = None
-
-import firebase_admin
-from firebase_admin import credentials, firestore
-import os, json
+import os
+import json
 
 firebase_app = None
 db = None
@@ -26,14 +20,29 @@ db = None
 def get_firestore():
     global firebase_app, db
     if not firebase_app:
-        cred_dict = json.loads(os.environ["GOOGLE_CREDENTIALS"])
-        cred = credentials.Certificate(cred_dict)
-        firebase_app = firebase_admin.initialize_app(cred)
-        db = firestore.client()
+        try:
+            # 🔐 Load credentials from Render environment variable
+            cred_json = os.environ.get("GOOGLE_CREDENTIALS")
+            if not cred_json:
+                raise ValueError("GOOGLE_CREDENTIALS environment variable not set.")
+            
+            # ✅ Convert string to dict
+            cred_dict = json.loads(cred_json)
+            cred = credentials.Certificate(cred_dict)
+
+            # 🚀 Initialize Firebase App
+            firebase_app = firebase_admin.initialize_app(cred)
+            db = firestore.client()
+
+        except Exception as e:
+            print(f"Firebase initialization failed: {e}")
+            raise
+
     return db
 
-# ✅ Use this
+# ✅ Use this in your code to get Firestore reference
 db = get_firestore()
+
 
 
 app = Flask(__name__)
