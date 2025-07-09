@@ -9,8 +9,14 @@ import csv
 complaints = [] 
 
 # Initialize Firebase
-cred = credentials.Certificate("firebase_key.json")
-firebase_admin.initialize_app(cred)
+import os, json
+from firebase_admin import credentials, initialize_app
+
+cred_json = os.environ.get("GOOGLE_CREDENTIALS")
+cred_dict = json.loads(cred_json)
+cred = credentials.Certificate(cred_dict)
+initialize_app(cred)
+
 db = firestore.client()
 
 app = Flask(__name__)
