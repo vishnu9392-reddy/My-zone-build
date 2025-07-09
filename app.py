@@ -21,18 +21,28 @@ def get_firestore():
     global firebase_app, db
     if not firebase_app:
         try:
-            # 🔐 Load credentials from Render environment variable
+            # 🔐 Load credentials from environment
             cred_json = os.environ.get("GOOGLE_CREDENTIALS")
             if not cred_json:
                 raise ValueError("GOOGLE_CREDENTIALS environment variable not set.")
-            
-            # ✅ Convert string to dict
+
+            # ✅ Convert JSON string to Python dict
             cred_dict = json.loads(cred_json)
-            cred = credentials.Certificate(cred_dict)
+
+            # 🛠 Fix the escaped newline characters in the private key
+            if "private_key" in cred_dict:
+                cred_dict["private_key"] = cred_dict["private_key"].replace("\\n", "\n")
 
             # 🚀 Initialize Firebase App
+            cred = credentials.Certificate(cred_dict)
             firebase_app = firebase_admin.initialize_app(cred)
             db = firestore.client()
+
+        except Exception as e:
+            print(f"Firebase initialization failed: {e}")
+            raise e
+
+    return db
 
         except Exception as e:
             print(f"Firebase initialization failed: {e}")
