@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resident Maintenance</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="/static/maintenance.css"> <!-- External CSS File -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Maintenance Payment</h1>
+    
+        <div class="payment-section">
+            <h3>Submit Payment</h3>
+            <label>Select Month & Year:</label>
+            <input type="text" id="paymentMonthYear" readonly>
+            <label>Amount Paid:</label>
+            <input type="number" id="amountPaid" required>
+            <label>Upload Receipt:</label>
+            <input type="file" id="receiptUpload" accept="application/pdf,image/*" required>
+            <button onclick="submitPayment()">Submit</button>
+        </div>
+    
+        <div class="filters">
+            <div>
+                <label>Filter by Month & Year:</label>
+                <input type="text" id="monthYearPicker" readonly>
+            </div>
+            <div>
+                <button onclick="loadMaintenance()">Filter</button>
+                <button class="download-btn" onclick="downloadCSV()">Download CSV</button>
+            </div>
+        </div>
+    
+        <h3>Maintenance Records</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Resident Name</th>
+                    <th>Flat No</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Receipt</th>
+                </tr>
+            </thead>
+            <tbody id="maintenanceTable"></tbody>
+        </table>
+    
+        <div class="total-maintenance">
+            Total Maintenance: ₹<span id="totalAmount">0</span>
+        </div>
+    </div>
+    
+
+<script>
+   document.addEventListener("DOMContentLoaded", function() {
+    let today = new Date();
+    let currentMonthYear = today.getFullYear() + "-" + String(today.getMonth() + 1).padStart(2, '0');
+
+    flatpickr("#paymentMonthYear", { dateFormat: "Y-m", defaultDate: currentMonthYear });
+    flatpickr("#monthYearPicker", { dateFormat: "Y-m", defaultDate: currentMonthYear });
+
+    loadMaintenance();
+});
+
+async function submitPayment() {
+    let monthYear = $("#paymentMonthYear").val();
+    let amount = $("#amountPaid").val();
+    let receipt = $("#receiptUpload")[0].files[0];
+
+    if (!monthYear || !amount || !receipt) {
+        alert("Please fill all fields.");
+        return;
+    }
+
+    let formData = new FormData();
+    formData.append("month_year", monthYear);
+    formData.append("amount_paid", amount);
+    formData.append("receipt", receipt);
+
+    let response = await fetch("/submit_maintenance_payment", { method: "POST", body: formData });
+    let result = await response.json();
+    alert(result.message);
+    loadMaintenance();
+}
+
+async function loadMaintenance() {
+    let monthYear = $("#monthYearPicker").val();
+    let [year, month] = monthYear.split("-");
+
+    let response = await fetch(`/get_resident_maintenance?month=${month}&year=${year}`);
+    let records = await response.json();
+
+    let totalAmount = 0;
+    $("#maintenanceTable").html(records.map(r => {
+        totalAmount += parseFloat(r.amount_paid || 0);
+        return `<tr>
+            <td>${r.resident_name}</td>
+            <td>${r.flat_number}</td>
+            <td>₹${r.amount_paid}</td>
+            <td>${r.status}</td>
+            <td>${r.receipt_path ? `<a href="${r.receipt_path}" target="_blank">View</a>` : "N/A"}</td>
+        </tr>`;
+    }).join(''));
+
+    $("#totalAmount").text(totalAmount);
+}
+
+function downloadCSV() {
+    let rows = [["Resident Name", "Flat No", "Amount Paid", "Status", "Receipt"]];
+    $("#maintenanceTable tr").each(function() {
+        let cols = [];
+        $(this).find("td").each(function() {
+            cols.push($(this).text().trim());
+        });
+        if (cols.length) rows.push(cols);
+    });
+
+    let csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
+    let encodedUri = encodeURI(csvContent);
+    let link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "maintenance_records.csv");
+    document.body.appendChild(link);
+    link.click();
+}
+
+</script>
+
+</body>
+</html>

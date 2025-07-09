@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Admin Registration</title>
+    <link rel="stylesheet" type="text/css" href="/static/adminregister.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Apartment Registration</h2>
+
+        <div class="input-group">
+            <label for="name">Apartment Name</label>
+            <input type="text" id="name" placeholder="Enter Apartment Name" required>
+        </div>
+
+        <div class="input-group">
+            <label for="location">Location</label>
+            <input type="text" id="location" placeholder="Enter Apartment Location" required>
+        </div>
+
+        <div class="input-group">
+            <label for="total_flats">Total Flats</label>
+            <input type="number" id="total_flats" placeholder="Enter Total Flats" value="100" required>
+        </div>
+
+        <div class="input-group">
+            <label for="established">Established Year</label>
+            <input type="number" id="established" placeholder="Enter Established Year" value="2015" required>
+        </div>
+
+        <div class="input-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" placeholder="Enter your email" required>
+        </div>
+
+        <div class="input-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="Enter your password" required>
+        </div>
+
+        <div class="input-group">
+            <label for="confirm_password">Confirm Password</label>
+            <input type="password" id="confirm_password" placeholder="Re-enter your password" required>
+        </div>
+
+        <p id="passwordMessage"></p> <!-- Password Mismatch Warning -->
+
+        <div class="input-group">
+            <label for="apartment_code">Apartment Code</label>
+            <input type="text" id="apartment_code" placeholder="Create Apartment Code" required>
+        </div>
+
+        <button class="btn" onclick="registerAdmin()"> Register Apartment</button>
+        <button class="btn back-btn" onclick="goBack()">Back</button>
+    </div>
+
+    <script>
+        async function registerAdmin() {
+            const name = document.getElementById("name").value;
+            const location = document.getElementById("location").value;
+            const total_flats = document.getElementById("total_flats").value;
+            const established = document.getElementById("established").value;
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            const confirmPassword = document.getElementById("confirm_password").value;
+            const apartment_code = document.getElementById("apartment_code").value;
+            const passwordMessage = document.getElementById("passwordMessage");
+
+            if (password !== confirmPassword) {
+                passwordMessage.textContent = "Passwords do not match!";
+                return;
+            } else {
+                passwordMessage.textContent = ""; // Clear error message
+            }
+
+            const response = await fetch("/admin_register", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name,
+                    location,
+                    total_flats,
+                    established,
+                    email,
+                    password,
+                    role: "admin",
+                    apartment_code
+                })
+            });
+
+            const result = await response.json();
+            alert(result.message);
+            if (response.status === 201) window.location.href = "/login_page";
+        }
+
+        function goBack() {
+            window.history.back();
+        }
+    </script>
+
+</body>
+</html>

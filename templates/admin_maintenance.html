@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maintenance Records</title>
+    <link rel="stylesheet" href="/static/admin_maintenance.css">
+</head>
+<body>
+
+<div class="container">
+    <button class="back-button" onclick="goBack()">⬅ Go Back</button>
+    <h1>Maintenance Payments</h1>
+
+    <div class="filters">
+        <label for="monthSelect">Select Month:</label>
+        <select id="monthSelect" onchange="loadResidents()"></select>
+
+        <label for="yearSelect">Select Year:</label>
+        <select id="yearSelect" onchange="loadResidents()"></select>
+    </div>
+
+    <h3>Maintenance Records</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Resident Name</th>
+                <th>Flat No</th>
+                <th>Amount</th>
+                <th>Receipt</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="maintenanceTable">
+            <!-- Records will be added dynamically -->
+        </tbody>
+    </table>
+
+    <h3>Total Amount Collected: ₹<span id="totalAmount">0</span></h3>
+</div>
+
+<script>
+    function goBack() {
+        window.history.back();
+    }
+
+    function populateMonthAndYear() {
+        let monthSelect = document.getElementById("monthSelect");
+        let yearSelect = document.getElementById("yearSelect");
+
+        const months = [
+            "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"
+        ];
+
+        let currentDate = new Date();
+        let currentMonth = currentDate.getMonth();
+        let currentYear = currentDate.getFullYear();
+
+        monthSelect.innerHTML = "";
+        months.forEach((month, index) => {
+            let option = document.createElement("option");
+            option.value = (index + 1).toString().padStart(2, '0');
+            option.textContent = month;
+            if (index === currentMonth) option.selected = true;
+            monthSelect.appendChild(option);
+        });
+
+        yearSelect.innerHTML = "";
+        for (let year = currentYear - 2; year <= currentYear + 2; year++) {
+            let option = document.createElement("option");
+            option.value = year;
+            option.textContent = year;
+            if (year === currentYear) option.selected = true;
+            yearSelect.appendChild(option);
+        }
+    }
+
+    async function loadResidents() {
+        const selectedMonth = document.getElementById("monthSelect").value;
+        const selectedYear = document.getElementById("yearSelect").value;
+
+        try {
+            const residentResponse = await fetch("/get_residents");
+            const residents = await residentResponse.json();
+
+            const maintenanceResponse = await fetch(`/get_maintenance?month=${selectedMonth}&year=${selectedYear}`);
+            const maintenanceData = await maintenanceResponse.json();
+
+            let tableBody = document.getElementById("maintenanceTable");
+            tableBody.innerHTML = "";
+            
+            let totalAmount = maintenanceData.total_collected || 0;
+
+            residents.forEach(resident => {
+                let paidRecord = maintenanceData.records.find(record => 
+                    record.flat_number === resident.flat_number &&
+                    record.apartment_code === resident.apartment_code &&
+                    record.month === selectedMonth &&
+                    record.year === selectedYear
+                );
+
+                let row = `
+                    <tr id="row_${resident.flat_number}_${resident.apartment_code}">
+                        <td>${resident.name}</td>
+                        <td>${resident.flat_number}</td>
+                        <td id="amountCell_${resident.flat_number}_${resident.apartment_code}">
+                            ${paidRecord ? `<span style='color: green; font-weight: bold;'>₹${paidRecord.amount_paid}</span>` : "Pending"}
+                        </td>
+                        <td id="receiptCell_${resident.flat_number}_${resident.apartment_code}">
+                            ${paidRecord && paidRecord.receipt ? `<a href="${paidRecord.receipt}" target="_blank">View Receipt</a>` : "No Receipt"}
+                        </td>
+                        
+                        <td id="actionCell_${resident.flat_number}_${resident.apartment_code}">
+                            ${paidRecord && paidRecord.status === "Paid"
+                                ? "<span style='color: green; font-weight: bold;'>Paid</span>"
+                                : `<button id="confirmBtn_${resident.flat_number}_${resident.apartment_code}" onclick="confirmPayment('${resident.flat_number}', '${resident.apartment_code}')">Confirm</button>`}
+                        </td>
+                    </tr>
+                `;
+                tableBody.innerHTML += row;
+            });
+
+            document.getElementById("totalAmount").innerText = totalAmount;
+
+        } catch (error) {
+            console.error("Error loading residents:", error);
+        }
+    }
+
+    async function confirmPayment(flatNumber, apartmentCode) {
+        let selectedMonth = document.getElementById("monthSelect").value;
+        let selectedYear = document.getElementById("yearSelect").value;
+
+        try {
+            const response = await fetch("/confirm_maintenance", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    flat_number: flatNumber,
+                    apartment_code: apartmentCode,
+                    month: selectedMonth,  
+                    year: selectedYear
+                })
+            });
+
+            const data = await response.json();
+            
+            if (response.ok) {
+                alert(data.message);
+                loadResidents(); // Refresh table
+            } else {
+                alert("Error confirming payment: " + data.message);
+            }
+
+        } catch (error) {
+            console.error("Error:", error);
+            alert("Confirmation failed. Please try again.");
+        }
+    }
+
+    populateMonthAndYear();
+    loadResidents();
+</script>
+
+</body>
+</html>

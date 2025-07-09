@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Residents</title>
+    <link rel="stylesheet" href="/static/adminresidents.css">
+</head>
+<body>
+
+    <button class="back-button" onclick="goBack()">⬅ Go Back</button>
+    <h1>Residents List</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Flat Number</th>  
+                <th>Email</th>
+                <th>Apartment Code</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="residentTable">
+            {% for resident in residents %}
+            <tr>
+                <td>{{ resident.name }}</td>
+                <td>{{ resident.flat_number }}</td>
+                <td>{{ resident.email }}</td>
+                <td>{{ resident.apartment_code }}</td>
+                <td><button onclick="removeResident('{{ resident.email }}')">Remove</button></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <script>
+        function goBack() {
+            window.history.back();
+        }
+
+        function removeResident(email) {
+            fetch("/remove_resident", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: email })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert("Resident removed successfully!");
+                    location.reload();
+                } else {
+                    alert("Error: " + data.message);
+                }
+            })
+            .catch(error => console.error("Error:", error));
+        }
+    </script>
+
+</body>
+</html>

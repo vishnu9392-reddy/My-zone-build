@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Gallery</title>
+    <link rel="stylesheet" href="/static/admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+</head>
+<body>
+
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Gallery Section -->
+        <div class="section" id="gallery">
+            <h2>🖼️ Gallery</h2>
+            <form action="/upload_image" method="POST" enctype="multipart/form-data">
+                <label for="image">Upload Image:</label>
+                <input type="file" name="image" id="image" required>
+                <button type="submit">Upload</button>
+            </form>
+            <div id="gallery_images">
+                {% for image_url in gallery_images %}
+                    <img src="{{ image_url }}" alt="Gallery Image">
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

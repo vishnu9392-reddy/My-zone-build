@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Complaints</title>
+    <link rel="stylesheet" href="/static/admin_complaints.css">
+</head>
+<body>
+
+    <button class="back-button" onclick="window.location.href='/admin_dashboard'">⬅ Go Back</button>
+    <h1>Manage Complaints</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Flat Number</th>
+                <th>Complaint</th>
+                <th>Resident</th>
+                <th>Status</th>
+                <th>Change Status</th>
+            </tr>
+        </thead>
+        <tbody id="admin_complaints_list"></tbody>
+    </table>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", fetchComplaints);
+
+        function fetchComplaints() {
+            fetch("/get_admin_complaints")
+            .then(response => response.json())
+            .then(data => {
+                let complaintsList = document.getElementById("admin_complaints_list");
+                complaintsList.innerHTML = "";
+
+                if (data.success && data.complaints.length > 0) {
+                    data.complaints.forEach(complaint => {
+                        let row = `<tr>
+                            <td>${complaint.flat_number}</td>
+                            <td>${complaint.text}</td>
+                            <td>${complaint.resident}</td>
+                            <td id="status_${complaint.id}">${complaint.status}</td>
+                            <td>
+                                <select onchange="updateStatus('${complaint.id}', this.value)">
+                                    <option value="Pending" ${complaint.status === "Pending" ? "selected" : ""}>Pending</option>
+                                    <option value="In Progress" ${complaint.status === "In Progress" ? "selected" : ""}>In Progress</option>
+                                    <option value="Resolved" ${complaint.status === "Resolved" ? "selected" : ""}>Resolved</option>
+                                </select>
+                            </td>
+                        </tr>`;
+                        complaintsList.innerHTML += row;
+                    });
+                } else {
+                    complaintsList.innerHTML = "<tr><td colspan='4'>No complaints found.</td></tr>";
+                }
+            })
+            .catch(error => console.error("Error fetching complaints:", error));
+        }
+
+        function updateStatus(complaintId, newStatus) {
+            fetch("/update_complaint_status", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: complaintId, status: newStatus })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById("status_" + complaintId).innerText = newStatus;
+                } else {
+                    alert("Error: " + data.message);
+                }
+            })
+            .catch(error => console.error("Error:", error));
+        }
+    </script>
+
+</body>
+</html>

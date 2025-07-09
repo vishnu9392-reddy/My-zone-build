@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Gallery</h3>
+<form action="/upload_image" method="POST" enctype="multipart/form-data">
+    <input type="file" name="image" required>
+    <button type="submit">Upload</button>
+</form>
+<div id="gallery_images">
+    <!-- Display uploaded images -->
+</div>
+{% endblock %}

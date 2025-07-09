@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <!-- Residents Section -->
+    <div id="residents">
+        <h2>Residents</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Apartment Code</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="residentTable">
+                {% for resident in residents %}
+                <tr>
+                    <td>{{ resident.name }}</td>
+                    <td>{{ resident.email }}</td>
+                    <td>{{ resident.apartment_code }}</td>
+                    <td><button onclick="removeResident('{{ resident.email }}')">Remove</button></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

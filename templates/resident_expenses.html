@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resident - Monthly Expenses</title>
+    <link rel="stylesheet" href="/static/resident_expenses.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+</head>
+<body>
+
+    <div class="container">
+        <h2>💰 Monthly Expenses</h2>
+
+        <!-- Expense Records -->
+        <div class="expenses-section">
+            <h3>📜 Expense Records</h3>
+            
+            <!-- Filter by Month -->
+            <label for="filter_month">Filter by Month:</label>
+            <select id="filter_month">
+                <option value="All">All Months</option>
+                <option value="January">January</option>
+                <option value="February">February</option>
+                <option value="March">March</option>
+                <option value="April">April</option>
+                <option value="May">May</option>
+                <option value="June">June</option>
+                <option value="July">July</option>
+                <option value="August">August</option>
+                <option value="September">September</option>
+                <option value="October">October</option>
+                <option value="November">November</option>
+                <option value="December">December</option>
+            </select>
+
+            <ul id="expensesList">
+                <p id="noExpensesMessage">Loading expenses...</p>
+            </ul>
+
+            <!-- Total & Remaining Budget Display -->
+            <div class="total">
+                <h3>Total Budget: ₹<span id="totalBudget">0</span></h3>
+                <h3>Total Spent: ₹<span id="totalAmount">0</span></h3>
+                <h3>Remaining Budget: ₹<span id="remainingAmount">0</span></h3>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let totalBudget = 0;
+        let totalSpent = 0;
+        let expensesData = [];  // Store all expenses globally
+    
+        // Fetch maintenance budget
+        function fetchMaintenanceBudget() {
+            fetch("/get_maintenance")
+                .then(response => response.json())
+                .then(data => {
+                    totalBudget = parseFloat(data.total_collected) || 0;
+                    document.getElementById("totalBudget").textContent = totalBudget.toFixed(2);
+                    updateBudgetDisplay();
+                })
+                .catch(error => console.error("Error fetching maintenance budget:", error));
+        }
+    
+        // Fetch expenses from API
+        function fetchExpenses() {
+            fetch("/get_expenses")
+                .then(response => response.json())
+                .then(data => {
+                    expensesData = data.expenses;  // Store the fetched expenses
+                    displayExpenses("All");  // Display all expenses initially
+                })
+                .catch(error => console.error("Error fetching expenses:", error));
+        }
+    
+        // Function to display expenses based on selected month
+        function displayExpenses(selectedMonth) {
+            let expensesList = document.getElementById("expensesList");
+            expensesList.innerHTML = "";  // Clear previous entries
+    
+            let filteredExpenses = expensesData.filter(expense => 
+                selectedMonth === "All" || expense.month === selectedMonth
+            );
+    
+            if (filteredExpenses.length === 0) {
+                expensesList.innerHTML = "<p>No expenses found for this month.</p>";
+                document.getElementById("totalAmount").textContent = "0";
+                updateBudgetDisplay();
+                return;
+            }
+    
+            totalSpent = 0;  // Reset total spent
+            filteredExpenses.forEach(expense => {
+                let listItem = document.createElement("li");
+                listItem.innerHTML = `<span class="month">${expense.month}</span> - 
+                                      <span class="desc">${expense.description}</span> 
+                                      <span class="amount">₹${expense.amount}</span>`;
+                expensesList.appendChild(listItem);
+                totalSpent += parseFloat(expense.amount);
+            });
+    
+            document.getElementById("totalAmount").textContent = totalSpent.toFixed(2);
+            updateBudgetDisplay();
+        }
+    
+        // Update total budget and remaining budget
+        function updateBudgetDisplay() {
+            let remainingAmount = totalBudget - totalSpent;
+            document.getElementById("remainingAmount").textContent = remainingAmount.toFixed(2);
+        }
+    
+        // Filter expenses when the dropdown is changed
+        document.getElementById("filter_month").addEventListener("change", function() {
+            displayExpenses(this.value);
+        });
+    
+        // Fetch data on page load
+        fetchMaintenanceBudget();
+        fetchExpenses();
+    </script>
+    
+
+</body>
+</html>

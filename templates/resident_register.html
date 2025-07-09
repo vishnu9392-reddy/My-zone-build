@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Resident Registration</title>
+    <link rel="stylesheet" type="text/css" href="/static/residents.css">
+    <script>
+        async function registerResident(event) {
+            event.preventDefault();
+
+            const name = document.getElementById("name").value;
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            const flat_number = document.getElementById("flat_number").value;
+            const apartment_code = document.getElementById("apartment_code").value;
+
+            const response = await fetch("/resident_register", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    name, 
+                    email, 
+                    password, 
+                    flat_number, 
+                    role: "resident", 
+                    apartment_code 
+                })
+            });
+
+            const result = await response.json();
+            const messageElement = document.getElementById("message");
+            messageElement.textContent = result.message;
+
+            if (response.ok) {
+                messageElement.style.color = "green";
+                setTimeout(() => window.location.href = "/login_page", 2000); // Redirect to login page
+            } else {
+                messageElement.style.color = "red";
+            }
+        }
+    </script>
+</head>
+<body>
+    <h2>Resident Registration</h2>
+    <form id="residentForm">
+        <input type="text" id="name" placeholder="Name" required><br>
+        <input type="email" id="email" placeholder="Email" required><br>
+        <input type="password" id="password" placeholder="Password" required><br>
+        <input type="text" id="flat_number" placeholder="Flat Number" required><br>
+        <input type="text" id="apartment_code" placeholder="Apartment Code" required><br>
+        <button type="submit">Register as Resident</button>
+    </form>
+    <p id="message"></p>
+
+    <script>
+        document.getElementById("residentForm").addEventListener("submit", registerResident);
+    </script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resident - View & Vote Events</title>
+    <link rel="stylesheet" href="/static/resident_events.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+
+<div class="container">
+    <button class="back-button" onclick="goBack()">⬅ Go Back</button>
+    <h1>Upcoming Events</h1>
+
+    <div id="eventsContainer">
+        <!-- Events will be dynamically loaded here -->
+    </div>
+</div>
+
+<script>
+    function goBack() {
+        window.history.back();
+    }
+
+    $(document).ready(function() {
+        loadEvents();
+        setInterval(loadEvents, 5000); // Auto-refresh every 5 sec
+    });
+
+    function loadEvents() {
+        $.get("/get_events", function(events) {
+            let container = $("#eventsContainer");
+            container.html("");
+
+            events.forEach(event => {
+                let totalVotes = event.yes_votes + event.no_votes;
+                let yesPercent = totalVotes > 0 ? (event.yes_votes / totalVotes) * 100 : 0;
+                let noPercent = totalVotes > 0 ? (event.no_votes / totalVotes) * 100 : 0;
+
+                let eventHtml = `
+                    <div class="event-card">
+                        <div class="event-info">
+                            <h2>${event.title}</h2>
+                            <p><strong>Date:</strong> ${event.date}</p>
+                            <p>${event.description}</p>
+                        </div>
+
+                        <div class="poll-container">
+                            <div class="vote-section">
+                                <button class="vote-btn yes" onclick="voteEvent('${event.id}', 'yes')">👍 Yes</button>
+                                <div class="poll-bar-container">
+                                    <div class="poll-bar yes" style="height: ${yesPercent}%;" id="yes-progress-${event.id}"></div>
+                                </div>
+                                <p class="vote-count"><strong>Yes:</strong> <span id="yes-votes-${event.id}">${event.yes_votes || 0}</span></p>
+                            </div>
+
+                            <div class="vote-section">
+                                <button class="vote-btn no" onclick="voteEvent('${event.id}', 'no')">👎 No</button>
+                                <div class="poll-bar-container">
+                                    <div class="poll-bar no" style="height: ${noPercent}%;" id="no-progress-${event.id}"></div>
+                                </div>
+                                <p class="vote-count"><strong>No:</strong> <span id="no-votes-${event.id}">${event.no_votes || 0}</span></p>
+                            </div>
+                        </div>
+
+                        <!-- Voter List Below Poll -->
+                        <div class="voter-list-container">
+                            <div class="voter-list yes-voters">
+                                <h4>Yes Voters</h4>
+                                <div id="yes-voters-${event.id}">${getVoterListHTML(event.yes_voters)}</div>
+                            </div>
+                            <div class="voter-list no-voters">
+                                <h4>No Voters</h4>
+                                <div id="no-voters-${event.id}">${getVoterListHTML(event.no_voters)}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.append(eventHtml);
+            });
+        });
+    }
+
+    function voteEvent(eventId, voteType) {
+        $.ajax({
+            url: `/vote_event/${eventId}/${voteType}`,
+            type: "POST",
+            contentType: "application/json",
+            success: function(response) {
+                if (response.message === "You have already voted!") {
+                    alert(response.message);
+                } else {
+                    alert("Vote submitted!");
+
+                    let yesVotes = response.yes_votes;
+                    let noVotes = response.no_votes;
+                    let totalVotes = yesVotes + noVotes;
+                    let yesPercent = totalVotes > 0 ? (yesVotes / totalVotes) * 100 : 0;
+                    let noPercent = totalVotes > 0 ? (noVotes / totalVotes) * 100 : 0;
+
+                    // Update vertical poll bars dynamically
+                    $(`#yes-progress-${eventId}`).animate({ height: yesPercent + "%" }, 500);
+                    $(`#no-progress-${eventId}`).animate({ height: noPercent + "%" }, 500);
+
+                    // Update vote counts dynamically
+                    $(`#yes-votes-${eventId}`).text(yesVotes);
+                    $(`#no-votes-${eventId}`).text(noVotes);
+
+                    // Update voter lists dynamically
+                    $(`#yes-voters-${eventId}`).html(getVoterListHTML(response.yes_voters));
+                    $(`#no-voters-${eventId}`).html(getVoterListHTML(response.no_voters));
+                }
+            },
+            error: function() {
+                alert("Error voting on event.");
+            }
+        });
+    }
+
+    function getVoterListHTML(voters) {
+        return voters.length > 0 ? voters.map(voter => `<span class="voter">${voter}</span>`).join(", ") : "<i>No votes yet</i>";
+    }
+</script>
+
+</body>
+</html>

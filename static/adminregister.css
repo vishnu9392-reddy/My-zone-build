@@ -1,0 +1,172 @@
+/* Reset and Global Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+/* Full-page styling */
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: linear-gradient(135deg, #004aad, #00d4ff);
+}
+
+/* Container Styling */
+.container {
+    background-color: white;
+    padding: 40px;
+    width: 500px;
+    max-width: 100%;
+    border-radius: 10px;
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Form Title */
+h2 {
+    color: #333;
+    margin-bottom: 20px;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+/* Input Groups */
+.input-group {
+    text-align: left;
+    margin-bottom: 20px;
+}
+
+.input-group label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 6px;
+    color: #444;
+    font-size: 16px;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 16px;
+    transition: 0.3s;
+}
+
+.input-group input:focus {
+    border-color: #007bff;
+    outline: none;
+    box-shadow: 0px 0px 6px rgba(0, 123, 255, 0.5);
+}
+
+/* Password Mismatch Message */
+#passwordMessage {
+    color: red;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+/* Buttons */
+.btn {
+    background-color: #007bff;
+    color: white;
+    padding: 14px;
+    border: none;
+    border-radius: 6px;
+    width: 100%;
+    font-size: 18px;
+    cursor: pointer;
+    transition: 0.3s;
+    font-weight: bold;
+}
+
+.btn:hover {
+    background-color: #0056b3;
+}
+
+/* Back Button */
+.back-btn {
+    background-color: #6c757d;
+    margin-top: 12px;
+}
+
+.back-btn:hover {
+    background-color: #5a6268;
+}
+
+/* Desktop-Optimized */
+@media screen and (min-width: 1024px) {
+    .container {
+        width: 600px;
+        padding: 50px;
+    }
+
+    h2 {
+        font-size: 26px;
+    }
+
+    .input-group label {
+        font-size: 18px;
+    }
+
+    .input-group input {
+        font-size: 18px;
+        padding: 14px;
+    }
+
+    .btn {
+        font-size: 20px;
+        padding: 16px;
+    }
+}
+
+/* Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+/* Enable Scrolling for the Whole Page */
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;  /* Ensures it expands fully */
+    background: linear-gradient(135deg, #004aad, #00d4ff);
+    overflow-y: auto;  /* Enables scrolling */
+    padding: 20px; /* Adds spacing to prevent cutoff */
+}
+
+/* Make Container Scrollable if Needed */
+.container {
+    background-color: white;
+    padding: 40px;
+    width: 500px;
+    max-width: 100%;
+    border-radius: 10px;
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    animation: fadeIn 0.5s ease-in-out;
+    overflow-y: auto; /* Ensures internal scrolling if content overflows */
+    max-height: 90vh; /* Prevents container from exceeding screen height */
+}
+
+/* Scrollable Form */
+.input-group {
+    margin-bottom: 15px;
+}
+
+/* Adjust Buttons for Visibility */
+.btn {
+    margin-top: 10px;
+}

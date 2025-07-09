@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Maintenance Team</h3>
+<ul id="maintainersList">
+    {% if maintainers %}
+        {% for maintainer in maintainers %}
+            <li>
+                <strong>Name: {{ maintainer.name }}</strong><br>
+                Contact: {{ maintainer.contact }}
+                <button onclick="callMaintainer('{{ maintainer.contact }}')">Call</button>
+            </li>
+        {% endfor %}
+    {% else %}
+        <p>No maintainers available.</p>
+    {% endif %}
+</ul>
+
+<script>
+    function callMaintainer(contact) {
+        window.location.href = "tel:" + contact;
+    }
+</script>
+{% endblock %}

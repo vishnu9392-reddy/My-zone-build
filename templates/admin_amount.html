@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Monthly Expenses</title>
+    <link rel="stylesheet" href="/static/admin_amounts.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+    <div class="container">
+        <h2>💰 Monthly Expenses</h2>
+
+        <!-- Budget Section -->
+        <div class="budget-container">
+            <label for="extra_budget">Add Extra Budget (₹):</label>
+            <input type="number" id="extra_budget" placeholder="Extra Budget">
+            <button id="addExtraBudgetBtn">Add Budget</button>
+
+            <h3>Maintenance Budget: ₹<span id="maintenanceBudget">0</span></h3>
+        </div>
+
+        <!-- Expense Form -->
+        <div class="form-container">
+            <form id="amountForm">
+                <select id="expense_month" required>
+                    <option value="" disabled selected>Select Month</option>
+                    <option value="January">January</option>
+                    <option value="February">February</option>
+                    <option value="March">March</option>
+                    <option value="April">April</option>
+                    <option value="May">May</option>
+                    <option value="June">June</option>
+                    <option value="July">July</option>
+                    <option value="August">August</option>
+                    <option value="September">September</option>
+                    <option value="October">October</option>
+                    <option value="November">November</option>
+                    <option value="December">December</option>
+                </select>
+                <input type="text" id="expense_description" placeholder="Expense Description" required>
+                <input type="number" id="expense_amount" placeholder="Amount (₹)" required>
+                <select id="expense_category" required>
+                    <option value="" disabled selected>Select Category</option>
+                    <option value="Utilities">Utilities</option>
+                    <option value="Repairs">Repairs</option>
+                    <option value="Security">Security</option>
+                    <option value="Cleaning">Cleaning</option>
+                    <option value="Other">Other</option>
+                </select>
+                <button type="submit"><i class="fas fa-plus"></i> Add Expense</button>
+            </form>
+        </div>
+
+        <!-- Expense Records -->
+        <div class="expenses-section">
+            <h3>📜 Expense Records</h3>
+            <select id="filter_month">
+                <option value="All">All Months</option>
+                <option value="January">January</option>
+                <option value="February">February</option>
+                <option value="March">March</option>
+                <option value="April">April</option>
+                <option value="May">May</option>
+                <option value="June">June</option>
+                <option value="July">July</option>
+                <option value="August">August</option>
+                <option value="September">September</option>
+                <option value="October">October</option>
+                <option value="November">November</option>
+                <option value="December">December</option>
+            </select>
+
+            <input type="text" id="searchExpense" placeholder="Search Expense">
+
+            <ul id="expensesList"></ul>
+            <p id="noExpensesMessage">No expenses recorded yet.</p>
+
+            <!-- Total & Remaining Budget Display -->
+            <div class="total">
+                <h3>Total Budget: ₹<span id="totalBudget">0</span></h3>
+                <h3>Total Spent: ₹<span id="totalAmount">0</span></h3>
+                <h3>Remaining Budget: ₹<span id="remainingAmount">0</span></h3>
+            </div>
+
+            <button id="exportPDF">📄 Export to PDF</button>
+
+            <!-- Expense Chart -->
+            <canvas id="expenseChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        let totalBudget = 0;
+        let maintenanceBudget = 0;
+        let expensesData = {};
+
+        function fetchMaintenanceBudget() {
+            fetch("/get_maintenance")
+                .then(response => response.json())
+                .then(data => {
+                    maintenanceBudget = parseFloat(data.total_collected) || 0;
+                    document.getElementById("maintenanceBudget").textContent = maintenanceBudget.toFixed(2);
+
+                    totalBudget += maintenanceBudget;
+                    updateBudgetDisplay();
+                })
+                .catch(error => console.error("Error fetching maintenance budget:", error));
+        }
+
+        function fetchExpenses() {
+            fetch("/get_admin_expenses")
+                .then(response => response.json())
+                .then(data => {
+                    totalBudget = maintenanceBudget + (data.extra_budget || 0);
+                    document.getElementById("totalBudget").textContent = totalBudget.toFixed(2);
+
+                    let totalSpent = data.total_expenses || 0;
+                    document.getElementById("totalAmount").textContent = totalSpent.toFixed(2);
+
+                    let remaining = totalBudget - totalSpent;
+                    document.getElementById("remainingAmount").textContent = remaining.toFixed(2);
+
+                    expensesData = data.expenses || {};
+                    displayExpenses("All");
+                })
+                .catch(error => console.error("Error fetching expenses:", error));
+        }
+
+        function displayExpenses(selectedMonth) {
+            let expensesList = document.getElementById("expensesList");
+            expensesList.innerHTML = "";
+
+            let filteredExpenses = selectedMonth === "All" ? 
+                Object.entries(expensesData).flatMap(([month, expenses]) => 
+                    expenses.map(expense => ({ ...expense, month }))) : 
+                (expensesData[selectedMonth] || []).map(expense => ({ ...expense, month: selectedMonth }));
+
+            if (filteredExpenses.length === 0) {
+                document.getElementById("noExpensesMessage").style.display = "block";
+                return;
+            } else {
+                document.getElementById("noExpensesMessage").style.display = "none";
+            }
+
+            filteredExpenses.forEach(expense => {
+                let listItem = document.createElement("li");
+                listItem.innerHTML = `<span class="month">${expense.month}</span> - 
+                                      <span class="desc">${expense.description}</span> 
+                                      <span class="amount">₹${expense.amount}</span> 
+                                      <button class="edit-btn">✏</button> 
+                                      <button class="delete-btn">🗑</button>`;
+                expensesList.appendChild(listItem);
+            });
+
+            updateChart(filteredExpenses);
+        }
+
+        function updateChart(expenses) {
+            let ctx = document.getElementById('expenseChart').getContext('2d');
+            let categories = [...new Set(expenses.map(exp => exp.category))];
+            let amounts = categories.map(cat => expenses.filter(exp => exp.category === cat).reduce((sum, exp) => sum + exp.amount, 0));
+
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: categories,
+                    datasets: [{ data: amounts, backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#4bc0c0', '#9966ff'] }]
+                }
+            });
+        }
+
+        document.getElementById("exportPDF").addEventListener("click", function() {
+            const { jsPDF } = window.jspdf;
+            let pdf = new jsPDF();
+            pdf.text("Monthly Expenses Report", 10, 10);
+            pdf.save("Expenses_Report.pdf");
+        });
+        // Add Expense Form Submission
+        document.getElementById("amountForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+    
+            let month = document.getElementById("expense_month").value;
+            let description = document.getElementById("expense_description").value;
+            let category = document.getElementById("expense_category").value;
+            let amount = parseFloat(document.getElementById("expense_amount").value);
+    
+            fetch("/add_expense", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ month, description, amount, expense_category })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    fetchExpenses();  // Refresh expenses list
+                    document.getElementById("expense_description").value = "";
+                    document.getElementById("expense_category").value = "";
+                    document.getElementById("expense_amount").value = "";
+                    document.getElementById("expense_month").value = "";
+                } else {
+                    alert("Error adding expense: " + data.message);
+                }
+            })
+            .catch(error => console.error("Error:", error));
+        });
+        fetch(`/get_total_expenses?apartment_code=YOUR_APARTMENT_CODE`)
+    .then(response => response.json())
+    .then(data => {
+        console.log("Fetched Total Expenses:", data);
+        document.getElementById("totalAmount").textContent = data.total_amount.toFixed(2);
+        document.getElementById("remainingAmount").textContent = data.remaining_amount.toFixed(2);
+    })
+    .catch(error => console.error("Error fetching total expenses:", error));
+    
+        // Fetch data on page load
+        fetchMaintenanceBudget();
+        fetchExpenses();
+    </script>
+
+</body>
+</html>

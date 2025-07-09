@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resident Complaints</title>
+    <link rel="stylesheet" href="/static/complaints.css">
+</head>
+<body>
+
+    <h1>Submit a Complaint</h1>
+
+    <form id="complaintForm">
+        <textarea id="complaintText" placeholder="Enter your complaint" required></textarea>
+        <button type="submit">Submit</button>
+    </form>
+
+    <h2>My Complaints</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Complaint</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="complaints_list"></tbody>
+    </table>
+
+    <div style="display: flex; justify-content: space-between;">
+        <a href="/resident_dashboard" class="btn btn-secondary">Back to Dashboard</a>
+        <button id="downloadBtn" class="btn btn-success" onclick="downloadCSV()">Download CSV</button>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", fetchComplaints);
+        
+        document.getElementById("complaintForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+            
+            let complaintText = document.getElementById("complaintText").value;
+
+            fetch("/add_resident_complaints", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ complaint: complaintText })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById("complaintText").value = "";
+                    fetchComplaints(); // Refresh complaints list
+                } else {
+                    alert("Error: " + data.message);
+                }
+            })
+            .catch(error => console.error("Error:", error));
+        });
+       
+        function fetchComplaints() {
+            fetch("/get_resident_complaints")
+            .then(response => response.json())
+            .then(data => {
+                let complaintsList = document.getElementById("complaints_list");
+                complaintsList.innerHTML = ""; // Clear existing complaints
+
+                if (data.success && data.complaints.length > 0) {
+                    data.complaints.forEach(complaint => {
+                        let row = `<tr>
+                            <td>${complaint.text}</td>
+                            <td>${complaint.status}</td>
+                        </tr>`;
+                        complaintsList.innerHTML += row;
+                    });
+                } else {
+                    complaintsList.innerHTML = "<tr><td colspan='2'>No complaints found.</td></tr>";
+                }
+            })
+            .catch(error => console.error("Error fetching complaints:", error));
+        }
+
+        function downloadCSV() {
+            fetch("/get_resident_complaints")
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.complaints.length > 0) {
+                    let csvContent = "Complaint,Status\n";
+                    data.complaints.forEach(complaint => {
+                        csvContent += `"${complaint.text}","${complaint.status}"\n`;
+                    });
+
+                    let blob = new Blob([csvContent], { type: "text/csv" });
+                    let link = document.createElement("a");
+                    link.href = URL.createObjectURL(blob);
+                    link.download = "complaints.csv";
+                    link.click();
+                } else {
+                    alert("No complaints to download.");
+                }
+            })
+            .catch(error => console.error("Error downloading CSV:", error));
+        }
+    </script>
+
+</body>
+</html>

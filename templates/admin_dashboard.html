@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="/static/admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+</head>
+<body>
+
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+        <h2>Admin Dashboard</h2>
+        <ul>
+            <li><a href="/admin_residents"><i class="fas fa-users"></i> Residents</a></li>
+            <li><a href="/admin_gallery"><i class="fas fa-image"></i> Gallery</a></li>
+            <li><a href="#maintainers"><i class="fas fa-tools"></i> Maintainers</a></li>
+            <li><a href="/admin_complaints"><i class="fas fa-exclamation-circle"></i> Complaints</a></li>
+            <li><a href="/maintenance_records"><i class="fas fa-wrench"></i> Maintenance</a></li>
+            <li><a href="/admin_events"><i class="fas fa-calendar-alt"></i> Events</a></li>
+            <li><a href="/admin_amounts"><i class="fas fa-money-bill"></i> Amount</a></li>
+        </ul>
+        <div class="logout">
+            <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        
+        <!-- Apartment Details Section -->
+        <div class="apartment-details">
+            <h2>🏢 Apartment Name: {{ apartment.name }}</h2>
+            <p>📍 Location: {{ apartment.location }} | 🏠 Total Flats: {{ apartment.total_flats }} | 📆 Established: {{ apartment.established }}</p>
+        </div>
+        
+
+        <!-- Announcements Section with Calendar -->
+        <div class="section" id="announcements">
+            <h2>📢 Announcements</h2>
+            <form id="announcementForm">
+                <input type="text" id="announcement_text" placeholder="Enter announcement" required>
+                <input type="date" id="announcement_date" required>
+                <button type="submit">Post Announcement</button>
+            </form>
+            <div class="announcements-list">
+                <h3>Latest Announcements</h3>
+                <ul id="announcementsList">
+                    {% if announcements %}
+                        {% for announcement in announcements %}
+                            <li>{{ announcement.message }} 
+                                <span class="date">📅 {{ announcement.date }}</span>
+                            </li>
+                        {% endfor %}
+                    {% else %}
+                        <p id="noAnnouncementsMessage">No announcements available.</p>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- Maintainers Section -->
+        <div class="section" id="maintainers">
+            <h2>🛠️ Maintainers</h2>
+            <form id="addMaintainerForm">
+                <input type="text" id="maintainer_name" placeholder="Maintainer Name" required>
+                <input type="text" id="maintainer_contact" placeholder="Contact Number" required>
+                <input type="text" id="maintainer_job_title" placeholder="Job Title" required>
+                <button type="submit">Add Maintainer</button>
+                
+            </form>
+            <div class="maintainers-list">
+                <h2>Maintainers List</h2>
+                <ul id="maintainersList">
+                    {% if maintainers %}
+                        {% for maintainer in maintainers %}
+                            <li>{{ maintainer.name }} - {{ maintainer.contact }}</li>
+                            <button onclick="removeMaintainer('{{ maintainer.id }}')">Remove</button>
+                        {% endfor %}
+                    {% else %}
+                        <p id="noMaintainersMessage">No maintainers available.</p>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+
+       
+
+       
+    </div>
+
+    <!-- JavaScript for Form Submission -->
+    <script>
+        // Post Announcement with Date
+        document.getElementById("announcementForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+            let announcementText = document.getElementById("announcement_text").value;
+            let announcementDate = document.getElementById("announcement_date").value;
+
+            fetch("/add_announcement", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: announcementText, date: announcementDate })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    let list = document.getElementById("announcementsList");
+                    let noAnnouncementsMessage = document.getElementById("noAnnouncementsMessage");
+
+                    if (noAnnouncementsMessage) {
+                        noAnnouncementsMessage.style.display = "none";
+                    }
+
+                    let newItem = document.createElement("li");
+                    newItem.innerHTML = `${announcementText} <span class="date">📅 ${announcementDate}</span>`;
+                    list.appendChild(newItem);
+
+                    document.getElementById("announcement_text").value = "";
+                    document.getElementById("announcement_date").value = "";
+                } else {
+                    alert("Error posting announcement: " + data.message);
+                }
+            })
+            .catch(error => console.error("Error:", error));
+        });
+        document.getElementById("addMaintainerForm").addEventListener("submit", function(event) {
+    event.preventDefault();
+    let name = document.getElementById("maintainer_name").value;
+    let contact = document.getElementById("maintainer_contact").value;
+    let job_title = document.getElementById("maintainer_job_title").value;
+
+    fetch("/add_maintainer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, contact, job_title })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log("Response from server:", data); // Debugging line
+
+        if (data.id) {  // Check for ID instead of success flag
+            let list = document.getElementById("maintainersList");
+            let noMaintainersMessage = document.getElementById("noMaintainersMessage");
+
+            if (noMaintainersMessage) {
+                noMaintainersMessage.style.display = "none";
+            }
+
+            // Create new list item
+            let newItem = document.createElement("li");
+            newItem.id = `maintainer-${data.id}`;
+            newItem.innerHTML = `
+                ${name} - ${contact} 
+                <button onclick="removeMaintainer('${data.id}')">Remove</button>
+            `;
+            list.appendChild(newItem);
+
+            // Clear input fields
+            document.getElementById("maintainer_name").value = "";
+            document.getElementById("maintainer_contact").value = "";
+            document.getElementById("maintainer_job_title").value = "";
+        } else {
+            alert("Error adding maintainer: " + data.message);
+        }
+    })
+    .catch(error => console.error("Error:", error));
+});
+
+// Remove Maintainer
+function removeMaintainer(maintainer_id) {
+    console.log("Sending request to remove maintainer:", maintainer_id); // Debugging line
+
+    fetch("/remove_maintainer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ maintainer_id }) // Make sure this key matches Flask's expected key
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log("Response from server:", data); // Debugging line
+        if (data.message === "Maintainer removed successfully!") {
+            alert("Maintainer removed successfully!");
+            document.getElementById(`maintainer-${maintainer_id}`).remove(); // Remove from UI without reload
+        } else {
+            alert("Error: " + data.message);
+        }
+    })
+    .catch(error => console.error("Error:", error));
+}
+    </script>
+
+</body>
+</html>

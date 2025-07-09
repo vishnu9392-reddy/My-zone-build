@@ -1,0 +1,104 @@
+/* General Styles */
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f8f9fa;
+    margin: 0;
+    padding: 0;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 220px;
+    position: fixed;
+    height: 100%;
+    background: #2c3e50;
+    padding: 20px;
+    color: white;
+}
+
+.sidebar a {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    margin-bottom: 5px;
+    transition: 0.3s;
+}
+
+.sidebar a:hover {
+    background: #3498db;
+}
+
+.sidebar .logout-btn {
+    background: #e74c3c;
+}
+
+/* Main Content */
+.main-content {
+    margin-left: 240px;
+    padding: 20px;
+}
+
+/* Sections */
+.section {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Maintainance Team */
+.maintainers-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.maintainer-card {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 250px;
+}
+
+.btn-call {
+    background: #27ae60;
+    color: white;
+    padding: 8px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-call:hover {
+    background: #2ecc71;
+}
+
+/* Profile Popup */
+.profile-popup {
+    display: none;
+    position: fixed;
+    top: 20%;
+    left: 50%;
+    transform: translate(-50%, 0);
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+}
+
+.popup-content {
+    text-align: center;
+}
+
+.close-btn {
+    float: right;
+    cursor: pointer;
+}

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resident Dashboard</title>
+    <link rel="stylesheet" href="/static/resident.css">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
+        <h2>🏠 Dashboard</h2>
+        <a href="#" class="active"><i class="fas fa-home"></i> Home</a>
+        <a href="{{ url_for('maintenance_page') }}"><i class="fas fa-tools"></i> Maintenance</a>
+        <a href="{{ url_for('complaints_page') }}"><i class="fas fa-exclamation-circle"></i> Complaints</a>
+        <a href="{{ url_for('events_page') }}"><i class="fas fa-calendar"></i> Events</a>
+        <a href="#" id="profileBtn"><i class="fas fa-user"></i> Profile</a>
+
+        <!-- Expenses Section -->
+        <a href="{{ url_for('expenses_page') }}"><i class="fas fa-money-bill-wave"></i> Expenses</a>
+        
+
+        <a href="{{ url_for('logout') }}" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <h2>Welcome, {{ resident.name }}! 😊</h2>
+
+        <!-- Apartment Announcements -->
+        <div class="section">
+            <h3>📢 Announcements</h3>
+            <label for="announcementDate">Select Date:</label>
+            <input type="date" id="announcementDate" onchange="fetchAnnouncements()">
+            <ul id="announcementsList"></ul>
+        </div>
+
+        <!-- Maintainers List -->
+        <h3>🔧 Maintenance Team</h3>
+        <div class="maintainers-container">
+            {% if maintainers %}
+                {% for maintainer in maintainers %}
+                    <div class="maintainer-card">
+                        <h4>{{ maintainer.name }}</h4>
+                        <p>📞 {{ maintainer.contact }}</p>
+                        <p>🔧 {{ maintainer.job_title }}</p>
+                        <button class="btn-call" onclick="callMaintainer('{{ maintainer.contact }}')">📞 Call</button>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>No maintainers available.</p>
+            {% endif %}
+        </div>
+
+        <!-- Download Resident Info -->
+        <button class="btn" onclick="downloadResidentInfo()">📋 Download Resident Info</button>
+    </div>
+
+    <!-- Profile Popup -->
+    <div id="profilePopup" class="profile-popup">
+        <div class="popup-content">
+            <span class="close-btn" onclick="toggleProfilePopup()">✖</span>
+            <h2>Resident Details</h2>
+            <p><strong>Name:</strong> {{ resident.name }}</p>
+            <p><strong>Email:</strong> {{ resident.email }}</p>
+            <p><strong>Apartment Code:</strong> {{ resident.apartment_code }}</p>
+            <p><strong>Flat Number:</strong> {{ resident.flat_number }}</p>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        document.getElementById("profileBtn").addEventListener("click", function() {
+            let popup = document.getElementById("profilePopup");
+            popup.style.display = "block";
+        });
+
+        function toggleProfilePopup() {
+            document.getElementById("profilePopup").style.display = "none";
+        }
+
+        function callMaintainer(contact) {
+            window.location.href = "tel:" + contact;
+        }
+
+        function downloadResidentInfo() {
+            let details = `Name: {{ resident.name }}\nEmail: {{ resident.email }}\nApartment Code: {{ resident.apartment_code }}\nFlat Number: {{ resident.flat_number }}`;
+
+            let blob = new Blob([details], { type: "text/plain" });
+            let link = document.createElement("a");
+            link.href = window.URL.createObjectURL(blob);
+            link.download = "Resident_Info.txt";
+            link.click();
+        }
+
+        function fetchAnnouncements() {
+            let selectedDate = document.getElementById("announcementDate").value;
+            let apartmentCode = "{{ resident.apartment_code }}";  
+
+            fetch(`/get_announcements?date=${selectedDate}&apartment_code=${apartmentCode}`)
+                .then(response => response.json())
+                .then(data => {
+                    let list = document.getElementById("announcementsList");
+                    list.innerHTML = "";
+
+                    if (data.announcements.length > 0) {
+                        data.announcements.forEach(announcement => {
+                            let listItem = document.createElement("li");
+                            listItem.textContent = `🔔 ${announcement.message}`;
+                            list.appendChild(listItem);
+                        });
+                    } else {
+                        list.innerHTML = "<p>No announcements for this date.</p>";
+                    }
+                })
+                .catch(error => console.error("Error fetching announcements:", error));
+        }
+
+        
+       
+
+        document.addEventListener("DOMContentLoaded", function() {
+            let today = new Date().toISOString().split("T")[0];
+            document.getElementById("announcementDate").value = today;
+
+           
+        });
+    </script>
+</body>
+</html>
