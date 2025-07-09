@@ -16,16 +16,25 @@ import json, os
 firebase_app = None
 db = None
 
+import firebase_admin
+from firebase_admin import credentials, firestore
+import os, json
+
+firebase_app = None
+db = None
+
 def get_firestore():
     global firebase_app, db
     if not firebase_app:
-        cred_dict = json.loads(os.environ["GOOGLE_CREDENTIALS"])  # or use your variable name
+        cred_dict = json.loads(os.environ["GOOGLE_CREDENTIALS"])
         cred = credentials.Certificate(cred_dict)
         firebase_app = firebase_admin.initialize_app(cred)
         db = firestore.client()
     return db
 
-db = firestore.client()
+# ✅ Use this
+db = get_firestore()
+
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
