@@ -1,4 +1,4 @@
-vfrom flask import Flask, render_template, request, redirect, session, jsonify, Response, abort
+from flask import Flask, render_template, request, redirect, session, jsonify, Response, abort
 import firebase_admin
 from firebase_admin import credentials, auth, firestore
 from google.cloud.firestore_v1.base_query import FieldFilter
