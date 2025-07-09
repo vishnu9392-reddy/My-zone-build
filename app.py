@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, jsonify, Response, abort
+vfrom flask import Flask, render_template, request, redirect, session, jsonify, Response, abort
 import firebase_admin
 from firebase_admin import credentials, auth, firestore
 from google.cloud.firestore_v1.base_query import FieldFilter
@@ -9,13 +9,21 @@ import csv
 complaints = [] 
 
 # Initialize Firebase
-import os, json
-from firebase_admin import credentials, initialize_app
+import firebase_admin
+from firebase_admin import credentials, firestore
+import json, os
 
-cred_json = os.environ.get("GOOGLE_CREDENTIALS")
-cred_dict = json.loads(cred_json)
-cred = credentials.Certificate(cred_dict)
-initialize_app(cred)
+firebase_app = None
+db = None
+
+def get_firestore():
+    global firebase_app, db
+    if not firebase_app:
+        cred_dict = json.loads(os.environ["GOOGLE_CREDENTIALS"])  # or use your variable name
+        cred = credentials.Certificate(cred_dict)
+        firebase_app = firebase_admin.initialize_app(cred)
+        db = firestore.client()
+    return db
 
 db = firestore.client()
 
@@ -578,7 +586,9 @@ def admin_register():
 
         try:
             # Ensure apartment code is unique
+            db = get_firestore()
             apartment = db.collection("apartments").document(apartment_code).get()
+
             if apartment.exists:
                 return jsonify({"message": "Apartment code already exists! Choose a different code."}), 400
 
